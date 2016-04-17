@@ -1,0 +1,11 @@
+{
+    "name": "creaturecutouts",
+    "version": "0.1.0",
+    "description": "A game about building creatures from simple shapes",
+    "homepage": "https://github.com/johntu/creaturecutouts",
+    "devDependencies": {
+        "grunt": "^0.4.5",
+        "grunt-contrib-connect": "^1.0.0",
+        "grunt-contrib-watch": "^0.6.1"
+    }
+}
