@@ -1,16 +1,36 @@
-define(function() {
+define([
+    "core/renderer"
+], function(
+    renderer
+) {
 
     var self = {
+        onMouseDown: onMouseDown,
+        onMouseMove: onMouseMove,
+        onMouseDrag: onMouseDrag,
+        onMouseStart: onMouseStart,
+        onMouseEnd: onMouseEnd,
         onKeyDown: onKeyDown,
         onKeyStart: onKeyStart,
         onKeyEnd: onKeyEnd,
         update: update
     };
 
+    var mouseStartListeners = [];
+    var mouseEndListeners = [];
+    var mouseDownListeners = [];
+    var mouseMoveListeners = [];
+    var mouseDragListeners = [];
+
     var keyStartListeners = [];
     var keyEndListeners = [];
     var keyDownListeners = [];
 
+    var mouse = {
+        1: "left",
+        2: "middle",
+        3: "right"
+    };
     var keys = {
         37: "left",
         38: "up",
@@ -35,6 +55,7 @@ define(function() {
         6: "action7",
         7: "action8"
     };
+    var mouseMap = {};
     var keysMap = {};
     var buttonsMap = {};
     var mods = {
@@ -43,6 +64,7 @@ define(function() {
     };
     var modKeys = {};
 
+    var mouseEvents = {};
     var keyEvents = {};
     var gamepadEvents = {};
 
@@ -62,6 +84,10 @@ define(function() {
             buttonsMap[buttons[button]] = button;
         }
 
+        window.addEventListener("mousedown", mouseDownHandler);
+        window.addEventListener("mouseup", mouseUpHandler);
+        window.addEventListener("mousemove", mouseMoveHandler);
+
         window.addEventListener("keydown", keyDownHandler);
         window.addEventListener("keyup", keyUpHandler);
 
@@ -71,6 +97,45 @@ define(function() {
         window.addEventListener("gamepaddisconnected", function(e) {
             gamepadHandler(e, false);
         }, false);
+
+        function mouseDownHandler(evt) {
+            var code = evt.which;
+            if (mouse[code]) {
+                if (!mouseEvents[code]) {
+                    mouseEvents[code] = true;
+                    var pos = getMousePos(evt);
+                    for (var i = 0; i < mouseStartListeners.length; i++) {
+                        mouseStartListeners[i](pos, mouse[code]);
+                    }
+                }
+            }
+        }
+
+        function mouseUpHandler(evt) {
+            var code = evt.which;
+            if (mouse[code]) {
+                if (mouseEvents[code]) {
+                    mouseEvents[code] = false;
+                    var pos = getMousePos(evt);
+                    for (var i = 0; i < mouseEndListeners.length; i++) {
+                        mouseEndListeners[i](pos, mouse[code]);
+                    }
+                }
+            }
+        }
+
+        function mouseMoveHandler(evt) {
+            var code = evt.which;
+            var pos = getMousePos(evt);
+            if (mouse[code]) {
+                for (var i = 0; i < mouseDragListeners.length; i++) {
+                    mouseDragListeners[i](pos, mouse[code]);
+                }
+            }
+            for (var i = 0; i < mouseMoveListeners.length; i++) {
+                mouseMoveListeners[i](pos, null);
+            }
+        }
 
         function keyDownHandler(evt) {
             var code = evt.keyCode;
@@ -162,6 +227,15 @@ define(function() {
         }
         gamepadEvents = newGamepadEvents;
 
+        for (var mouse in mouseEvents) {
+            if (mouseEvents[mouse]) {
+                var pos = getMousePos(mouseEvents[mouse]);
+                for (var i = 0; i < mouseDownListeners.length; i++) {
+                    mouseDownListeners[i](pos, mouse[mouse]);
+                }
+            }
+        }
+
         for (var key in keyEvents) {
             if (keyEvents[key]) {
                 for (var i = 0; i < keyDownListeners.length; i++) {
@@ -175,6 +249,33 @@ define(function() {
         for (var key in mods) {
             modKeys[mods[key]] = evt[key];
         }
+    }
+
+    function getMousePos(evt) {
+        return {
+            x: (evt.pageX - renderer.x) / renderer.scale,
+            y: (evt.pageY - renderer.y) / renderer.scale
+        };
+    }
+
+    function onMouseMove(f) {
+        mouseMoveListeners.push(f);
+    }
+
+    function onMouseDrag(f) {
+        mouseDragListeners.push(f);
+    }
+
+    function onMouseDown(f) {
+        mouseDownListeners.push(f);
+    }
+
+    function onMouseStart(f) {
+        mouseStartListeners.push(f);
+    }
+
+    function onMouseEnd(f) {
+        mouseEndListeners.push(f);
     }
 
     function onKeyDown(f) {

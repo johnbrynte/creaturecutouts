@@ -1,8 +1,10 @@
 define(function() {
 
-    var timestep = 1 / 120;
+    var timestep = 1 / 60;
+    var drawstep = 0;
     var accumulated = 0;
     var prevtime = 0;
+    var prevdraw = 0;
     var running = false;
     var stepcallbacks = [];
     var drawcallbacks = [];
@@ -30,6 +32,7 @@ define(function() {
             running = true;
             accumulated = 0;
             prevtime = Date.now();
+            prevdraw = Date.now();
             innerLoop();
         }
     }
@@ -66,8 +69,15 @@ define(function() {
         prevtime = time;
 
         // draw
-        for (var i = 0; i < drawcallbacks.length; i++)
-            drawcallbacks[i]();
+        t = time - prevdraw;
+        var d = 0;
+        if (t > 0)
+            d = t / 1000;
+        if (d >= drawstep) {
+            prevdraw = time;
+            for (var i = 0; i < drawcallbacks.length; i++)
+                drawcallbacks[i]();
+        }
 
         if (running)
             window.requestAnimationFrame(innerLoop);
